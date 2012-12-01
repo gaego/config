@@ -53,7 +53,7 @@ func init() {
 // Config is the struct that is stored. The map[string]string{}
 // is gob encoded before being passed to ds.
 type Config struct {
-	Key        *datastore.Key `datastore"-"`
+	Key        *datastore.Key `datastore:"-"`
 	ValuesJSON []byte
 	Values     map[string]string `datastore:"-"`
 }
