@@ -1,4 +1,4 @@
-// Copyright 2012 AEGo Authors. All rights reserved.
+// Copyright 2012 GAEGo Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -36,13 +36,13 @@ Edit and save the config
 package config
 
 // TODO(kylefinley) move the JSON encoding of invalid datastore types
-// to hal/ds.
+// to ds.
 
 import (
 	"appengine"
 	"appengine/datastore"
 	"encoding/json"
-	"github.com/scotch/aego/v1/ds"
+	"github.com/gaego/ds"
 )
 
 func init() {
@@ -51,7 +51,7 @@ func init() {
 }
 
 // Config is the struct that is stored. The map[string]string{}
-// is gob encoded before being passed to hal/ds.
+// is gob encoded before being passed to ds.
 type Config struct {
 	Key        *datastore.Key `datastore"-"`
 	ValuesJSON []byte
