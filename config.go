@@ -96,6 +96,9 @@ func Get(c appengine.Context, key string) (cnfg *Config, err error) {
 	cnfg = new(Config)
 	cnfg.SetKey(c, key)
 	err = ds.Get(c, cnfg.Key, cnfg)
+	if err != nil {
+		return
+	}
 
 	m := make(map[string]string)
 	err = json.Unmarshal(cnfg.ValuesJSON, &m)
