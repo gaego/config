@@ -41,7 +41,8 @@ package config
 import (
 	"appengine"
 	"appengine/datastore"
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
 	"github.com/gaego/ds"
 )
 
@@ -53,19 +54,9 @@ func init() {
 // Config is the struct that is stored. The map[string]string{}
 // is gob encoded before being passed to ds.
 type Config struct {
-	Key        *datastore.Key `datastore:"-"`
-	ValuesJSON []byte
-	Values     map[string]string `datastore:"-"`
-}
-
-// SetValues sets the map to the Values property and sets ValuesJSON 
-// to a JSON encoded []byte
-func (cnfg *Config) SetValues(m map[string]string) (err error) {
-
-	val, err := json.Marshal(m)
-	cnfg.Values = m
-	cnfg.ValuesJSON = val
-	return
+	Key       *datastore.Key `datastore:"-"`
+	ValuesGob []byte
+	Values    map[string]string `datastore:"-"`
 }
 
 // SetKey set the Key property to a datastore.Key using the passed key
@@ -75,15 +66,29 @@ func (cnfg *Config) SetKey(c appengine.Context, key string) {
 	return
 }
 
+// Encode is called prior to save. Any fields that need to be updated
+// prior to save are updated here.
+func (cnfg *Config) Encode() error {
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+	err := enc.Encode(cnfg.Values)
+	cnfg.ValuesGob = b.Bytes()
+	return err
+}
+
+// Decode is called after the entity has been retrieved from the the ds.
+func (cnfg *Config) Decode() error {
+	b := bytes.NewBuffer(cnfg.ValuesGob)
+	dec := gob.NewDecoder(b)
+	err := dec.Decode(&cnfg.Values)
+	return err
+}
+
 // Put encodes the Values and saves the Config to the store.
 func (cnfg *Config) Put(c appengine.Context) (err error) {
-
-	val, err := json.Marshal(cnfg.Values)
-	if err != nil {
+	if err = cnfg.Encode(); err != nil {
 		return
 	}
-	cnfg.ValuesJSON = val
-
 	key, err := ds.Put(c, cnfg.Key, cnfg)
 	cnfg.Key = key
 	return
@@ -99,11 +104,7 @@ func Get(c appengine.Context, key string) (cnfg *Config, err error) {
 	if err != nil {
 		return
 	}
-
-	m := make(map[string]string)
-	err = json.Unmarshal(cnfg.ValuesJSON, &m)
-	cnfg.Values = m
-
+	err = cnfg.Decode()
 	return
 }
 
@@ -117,11 +118,8 @@ func GetOrInsert(c appengine.Context, key string,
 		return
 	}
 	cnfg = new(Config)
-	err = cnfg.SetValues(m)
-	if err != nil {
-		return
-	}
+	cnfg.Values = m
 	cnfg.SetKey(c, key)
-	cnfg.Put(c)
+	err = cnfg.Put(c)
 	return
 }
