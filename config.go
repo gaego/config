@@ -66,9 +66,9 @@ func (cnfg *Config) SetKey(c appengine.Context, key string) {
 	return
 }
 
-// Encode is called prior to save. Any fields that need to be updated
+// encode is called prior to save. Any fields that need to be updated
 // prior to save are updated here.
-func (cnfg *Config) Encode() error {
+func (cnfg *Config) encode() error {
 	var b bytes.Buffer
 	enc := gob.NewEncoder(&b)
 	err := enc.Encode(cnfg.Values)
@@ -76,8 +76,8 @@ func (cnfg *Config) Encode() error {
 	return err
 }
 
-// Decode is called after the entity has been retrieved from the the ds.
-func (cnfg *Config) Decode() error {
+// decode is called after the entity has been retrieved from the the ds.
+func (cnfg *Config) decode() error {
 	b := bytes.NewBuffer(cnfg.ValuesGob)
 	dec := gob.NewDecoder(b)
 	err := dec.Decode(&cnfg.Values)
@@ -86,7 +86,7 @@ func (cnfg *Config) Decode() error {
 
 // Put encodes the Values and saves the Config to the store.
 func (cnfg *Config) Put(c appengine.Context) (err error) {
-	if err = cnfg.Encode(); err != nil {
+	if err = cnfg.encode(); err != nil {
 		return
 	}
 	key, err := ds.Put(c, cnfg.Key, cnfg)
@@ -104,7 +104,7 @@ func Get(c appengine.Context, key string) (cnfg *Config, err error) {
 	if err != nil {
 		return
 	}
-	err = cnfg.Decode()
+	err = cnfg.decode()
 	return
 }
 
